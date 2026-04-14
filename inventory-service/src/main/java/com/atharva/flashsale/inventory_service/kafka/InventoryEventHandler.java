@@ -4,6 +4,7 @@ import com.atharva.flashsale.inventory_service.event.InventoryReservedEvent;
 import com.atharva.flashsale.inventory_service.event.OrderCreatedEvent;
 import com.atharva.flashsale.inventory_service.model.Inventory;
 import com.atharva.flashsale.inventory_service.repository.InventoryRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class InventoryEventHandler {
 
     private final InventoryRepository inventoryRepository;

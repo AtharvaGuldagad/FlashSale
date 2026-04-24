@@ -1,0 +1,17 @@
+config:
+  target: "http://localhost:8080"
+  phases:
+    # 100 users per second for 10 seconds = 1,000 total requests
+    - duration: 10
+      arrivalRate: 100
+      name: "The 1000 User Tsunami"
+
+scenarios:
+  - name: "Customer Checkout"
+    flow:
+      - post:
+          url: "/api/orders"
+          json:
+            productId: "PROD-123"
+            quantity: 1
+            price: 49.99

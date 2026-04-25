@@ -35,6 +35,7 @@ I load-tested the system using **Artillery** at **100 requests/second**.
 ## 💻 How to Run Locally
 
 *(Coming Soon: 1-Click Docker Compose Setup)*
+*(Docker integration failed and currently on the other "building-branch", if anyone can help, fork it and try running locally, i'd be happy to accept help)*
 
 **Manual Setup:**
 1. Start Apache Kafka: `.\bin\windows\kafka-server-start.bat .\config\kraft\server.properties`

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class InventoryEventHandler {
 
     private final InventoryRepository inventoryRepository;
@@ -23,37 +22,12 @@ public class InventoryEventHandler {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @KafkaListener(topics = "order-events", groupId = "inventory-group")
-    public void handleOrderCreated(OrderCreatedEvent event) {
-        System.out.println("Inventory Service received Order Event for Order ID: " + event.getOrderId());
-
-        Optional<Inventory> inventoryOpt = inventoryRepository.findByProductId(event.getProductId());
-
-        if (inventoryOpt.isPresent()) {
-            Inventory inventory = inventoryOpt.get();
-            
-            // Check if we have enough stock
-            if (inventory.getAvailableQuantity() >= event.getQuantity()) {
-                // Deduct stock and save
-                inventory.setAvailableQuantity(inventory.getAvailableQuantity() - event.getQuantity());
-                inventoryRepository.save(inventory);
-
-                System.out.println("Stock deducted. Remaining: " + inventory.getAvailableQuantity());
-
-                // Publish the next event to the "inventory-events" topic
-                InventoryReservedEvent reservedEvent = new InventoryReservedEvent(
-                        event.getOrderId(), 
-                        event.getProductId(), 
-                        "RESERVED"
-                );
-                kafkaTemplate.send("inventory-events", reservedEvent);
-                System.out.println("Published InventoryReservedEvent to Kafka!");
-            } else {
-                System.out.println("Out of stock for product: " + event.getProductId());
-                // REMINDER to handle this later
-            }
-        }
-    }
+    @KafkaListener(topics = "order-events", groupId = "docker-exclusive-group")
+public void handleOrderCreated(String rawMessage) {
+    // If it catches ANYTHING, it will scream it in red text!
+    System.err.println("🚨 RED HANDED! INVENTORY CAUGHT THE RAW MESSAGE:");
+    System.err.println(rawMessage);
+}
     
     @KafkaListener(topics = "order-cancelled-events", groupId = "inventory-group")
     public void handleOrderCancelled(OrderCreatedEvent event) {

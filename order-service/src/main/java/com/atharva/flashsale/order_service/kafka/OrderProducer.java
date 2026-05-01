@@ -15,7 +15,14 @@ public class OrderProducer {
 
     public void sendOrderCreatedEvent(OrderCreatedEvent event) {
         // "order-events" = Kafka topic we are sending this to
-        kafkaTemplate.send("order-events", event);
-        System.out.println("Order Event Published to Kafka: " + event.getOrderId());
+        try {
+            kafkaTemplate.send("order-events", event).get();
+            System.out.println("Order Event Published to Kafka: " + event.getOrderId());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to publish order event to Kafka", e);
+        } catch (java.util.concurrent.ExecutionException e) {
+            throw new RuntimeException("Failed to publish order event to Kafka", e);
+        }
     }
 }

@@ -1,0 +1,97 @@
+name: flash-sale-system
+
+networks:
+  flash-network:
+    driver: bridge
+
+services:
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka-broker
+    ports:
+      - "9092:9092"
+    networks:
+      - flash-network
+    environment:
+      - KAFKA_NODE_ID=1
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka-broker:9092
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
+
+  order-service:
+    build: 
+      context: ./order-service
+      dockerfile: Dockerfile 
+    container_name: order-service
+    ports:
+      - "8080:8080"
+      - "5005:5005" # Debug port
+    volumes:
+      - ./order-service:/app:z
+      - ~/.m2:/root/.m2:z
+    networks:
+      - flash-network
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+    depends_on:
+      - kafka
+
+  inventory-service:
+    build: 
+      context: ./inventory-service
+      dockerfile: Dockerfile
+    container_name: inventory-service
+    ports:
+      - "8081:8081"
+      - "5006:5005" # Debug port
+    volumes:
+      - ./inventory-service:/app:z
+      - ~/.m2:/root/.m2:z
+    networks:
+      - flash-network
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+    depends_on:
+      - kafka
+
+  payment-service:
+    build: 
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8082:8082"
+      - "5007:5005" # Debug port
+    volumes:
+      - ./payment-service:/app:z
+      - ~/.m2:/root/.m2:z
+    networks:
+      - flash-network
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-broker:9092
+    depends_on:
+      - kafka
+
+  frontend:
+    build: 
+      context: ./flash-sale-Frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    command: sh -c "npm install && npm run dev -- --host"
+    ports:
+      - "5173:5173"
+    volumes:
+      # Live-mount the frontend code
+      - ./flash-sale-Frontend:/app:z
+      # This anonymous volume is a lifesaver! It prevents your local node_modules 
+      # from overwriting the Linux node_modules inside the container.
+      # IDK WHAT ANY OF THIS ^^^ means for now, but it keeps the frontend running smoothly without npm install issues.
+      - /app/node_modules
+    networks:
+      - flash-network
+    depends_on:
+      - order-service
+      - inventory-service
+      - payment-service

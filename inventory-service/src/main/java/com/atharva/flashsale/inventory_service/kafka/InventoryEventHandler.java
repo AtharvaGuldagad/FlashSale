@@ -23,7 +23,7 @@ public class InventoryEventHandler {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @KafkaListener(topics = "order-events", groupId = "inventory-group")
+    @KafkaListener(topics = "order-events")
     public void handleOrderCreated(OrderCreatedEvent event) {
         System.out.println("Inventory Service received Order Event for Order ID: " + event.getOrderId());
 
